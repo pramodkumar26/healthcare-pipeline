@@ -1,0 +1,33 @@
+# credentials
+*.json
+*.env
+.env
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# data files
+*.csv
+*.parquet
+*.gz
+
+# jupyter
+.ipynb_checkpoints/
+
+# venv
+venv/
+env/
+
+# ide
+.vscode/
+.idea/
+
+# logs
+*.log
