@@ -2,9 +2,7 @@
 
 An end-to-end batch data pipeline that ingests CMS Medicare data, processes it with PySpark, stores it in BigQuery, trains ML models tracked with MLflow, orchestrates everything with Airflow, and serves insights through a Flask dashboard deployed on Cloud Run.
 
-## Live Demo
 
-**Dashboard:** https://healthcare-dashboard-530240923276.us-central1.run.app
 
 ## What This Project Does
 
