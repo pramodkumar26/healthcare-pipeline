@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, round, when
+from pyspark.sql.functions import col, round, when, lit
 
 spark = SparkSession.builder \
     .appName("healthcare-etl") \
@@ -60,6 +60,8 @@ df = df.withColumn(
     round(col("avg_medicare_payment") / when(col("avg_submitted_charge") == 0, 1)
     .otherwise(col("avg_submitted_charge")), 4)
 )
+df = df.withColumn("provider_type_col", col("provider_type")) \
+       .withColumn("state_col", col("state"))
 
 df = df.filter(
     (col("avg_submitted_charge") > 0) &
@@ -76,5 +78,8 @@ df.write.mode("overwrite") \
     .parquet(OUTPUT_PATH)
 
 print("ETL complete. Data written to GCS.")
+
+df.write.mode("overwrite") \
+    .parquet("gs://healthcare-pipeline-raw-data/curated/medicare_final.parquet")
 
 spark.stop()
