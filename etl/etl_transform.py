@@ -82,4 +82,26 @@ print("ETL complete. Data written to GCS.")
 df.write.mode("overwrite") \
     .parquet("gs://healthcare-pipeline-raw-data/curated/medicare_final.parquet")
 
+df.select(
+    "provider_id", "provider_name", "first_name", "credentials",
+    "entity_code", "address", "city", "state", "provider_type"
+).dropDuplicates(["provider_id"]) \
+ .write.mode("overwrite") \
+ .parquet("gs://healthcare-pipeline-raw-data/curated/dim_provider.parquet")
+
+df.select(
+    "hcpcs_code", "hcpcs_desc", "drug_indicator", "place_of_service"
+).dropDuplicates(["hcpcs_code"]) \
+ .write.mode("overwrite") \
+ .parquet("gs://healthcare-pipeline-raw-data/curated/dim_procedure.parquet")
+
+df.select(
+    "provider_id", "hcpcs_code", "total_beneficiaries", "total_services",
+    "total_bene_day_services", "avg_submitted_charge", "avg_medicare_allowed",
+    "avg_medicare_payment", "avg_standardized_amount", "total_submitted_charge",
+    "total_medicare_payment", "payment_ratio"
+).write.mode("overwrite") \
+ .parquet("gs://healthcare-pipeline-raw-data/curated/fact_claims.parquet")
+
+
 spark.stop()

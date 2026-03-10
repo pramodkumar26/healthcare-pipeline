@@ -37,15 +37,16 @@ fact_claims_schema = [
     bigquery.SchemaField("payment_ratio", "FLOAT"),
 ]
 
-def create_table(table_name, schema):
+def delete_and_create_table(table_name, schema):
     table_ref = client.dataset(dataset_id).table(table_name)
+    client.delete_table(table_ref, not_found_ok=True)
     table = bigquery.Table(table_ref, schema=schema)
-    table = client.create_table(table, exists_ok=True)
-    print(f"Table {table_name} created.")
+    table = client.create_table(table)
+    print(f"Table {table_name} recreated.")
 
-create_table("dim_provider", dim_provider_schema)
-create_table("dim_procedure", dim_procedure_schema)
-create_table("fact_claims", fact_claims_schema)
+delete_and_create_table("dim_provider", dim_provider_schema)
+delete_and_create_table("dim_procedure", dim_procedure_schema)
+delete_and_create_table("fact_claims", fact_claims_schema)
 
 def load_from_gcs(table_name, gcs_uri, schema):
     table_ref = client.dataset(dataset_id).table(table_name)
@@ -61,19 +62,19 @@ def load_from_gcs(table_name, gcs_uri, schema):
 
 load_from_gcs(
     "dim_provider",
-    "gs://healthcare-pipeline-raw-data/curated/medicare_final.parquet/*.parquet",
+    "gs://healthcare-pipeline-raw-data/curated/dim_provider.parquet/*.parquet",
     dim_provider_schema
 )
 
 load_from_gcs(
     "dim_procedure",
-    "gs://healthcare-pipeline-raw-data/curated/medicare_final.parquet/*.parquet",
+    "gs://healthcare-pipeline-raw-data/curated/dim_procedure.parquet/*.parquet",
     dim_procedure_schema
 )
 
 load_from_gcs(
     "fact_claims",
-    "gs://healthcare-pipeline-raw-data/curated/medicare_final.parquet/*.parquet",
+    "gs://healthcare-pipeline-raw-data/curated/fact_claims.parquet/*.parquet",
     fact_claims_schema
 )
 
