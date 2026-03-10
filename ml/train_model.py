@@ -8,8 +8,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import LabelEncoder
 import numpy as np
+import os
 
-MLFLOW_TRACKING_URI = "http://34.72.180.156:5000"
+MLFLOW_TRACKING_URI = os.environ.get("MLFLOW_TRACKING_URI", "http://localhost:5000")
 PROJECT_ID = "healthcare-pipeline-489402"
 
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
@@ -19,28 +20,20 @@ client = bigquery.Client(project=PROJECT_ID)
 
 query = """
     SELECT
-        f.total_services,
-        f.total_beneficiaries,
-        f.avg_submitted_charge,
-        d.place_of_service,
-        d.drug_indicator,
-        f.avg_medicare_payment
-    FROM `healthcare-pipeline-489402.healthcare_analytics.fact_claims` f
-    JOIN `healthcare-pipeline-489402.healthcare_analytics.dim_provider` p
-    ON f.provider_id = p.provider_id
-    JOIN `healthcare-pipeline-489402.healthcare_analytics.dim_procedure` d
-    ON f.hcpcs_code = d.hcpcs_code
-    WHERE f.avg_medicare_payment > 0
+        total_services,
+        total_beneficiaries,
+        avg_submitted_charge,
+        avg_medicare_payment
+    FROM `healthcare-pipeline-489402.healthcare_analytics.fact_claims`
+    WHERE avg_medicare_payment > 0
 """
 
 print("Fetching data from BigQuery...")
-df = client.query(query).to_dataframe()
+df = client.query(query).result().to_dataframe(create_bqstorage_client=False)
+
 print(f"Rows fetched: {len(df)}")
 
-le_place = LabelEncoder()
-le_drug = LabelEncoder()
-df["place_of_service"] = le_place.fit_transform(df["place_of_service"].astype(str))
-df["drug_indicator"] = le_drug.fit_transform(df["drug_indicator"].astype(str))
+
 
 X = df.drop("avg_medicare_payment", axis=1)
 y = df["avg_medicare_payment"]

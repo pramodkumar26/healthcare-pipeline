@@ -8,7 +8,7 @@ load_dotenv()
 
 PROJECT_ID = "healthcare-pipeline-489402"
 BUCKET_NAME = "healthcare-pipeline-raw-data"
-LOCAL_FILE = r"C:\Projects\healthcare-pipeline\ingestion\medicare_2022.csv"
+LOCAL_FILE = rLOCAL_FILE = "/home/pramodarun26/healthcare_pipeline/ingestion/medicare_2022.csv"
 GCS_DESTINATION = "raw/medicare_2022.csv"
 API_URL = "https://data.cms.gov/data-api/v1/dataset/92396110-2aed-4d63-a6a2-5d6207d46a29/data"
 

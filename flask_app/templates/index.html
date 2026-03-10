@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Revenue Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f4f6f9; color: #333; }
+        header { background: #1a73e8; color: white; padding: 20px 40px; }
+        header h1 { font-size: 24px; }
+        header p { font-size: 14px; opacity: 0.85; margin-top: 4px; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+        .card { background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+        .card h2 { font-size: 16px; margin-bottom: 16px; color: #444; }
+        .full-width { grid-column: 1 / -1; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th { background: #f0f4ff; padding: 10px 14px; text-align: left; font-weight: 600; color: #555; }
+        td { padding: 10px 14px; border-bottom: 1px solid #eee; }
+        tr:last-child td { border-bottom: none; }
+        .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .best { background: #e6f4ea; color: #2d7a3a; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Healthcare Revenue Analytics Dashboard</h1>
+        <p>CMS Medicare 2022 — Powered by BigQuery + PySpark + MLflow</p>
+    </header>
+
+    <div class="container">
+        <div class="grid">
+            <div class="card">
+                <h2>Top 10 Provider Types by Medicare Payment</h2>
+                <canvas id="providerChart"></canvas>
+            </div>
+            <div class="card">
+                <h2>Top 10 States by Medicare Payment</h2>
+                <canvas id="stateChart"></canvas>
+            </div>
+            <div class="card full-width">
+                <h2>ML Model Comparison</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Model</th>
+                            <th>R2 Score</th>
+                            <th>RMSE</th>
+                            <th>MAE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mlTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadProviderChart() {
+            const res = await fetch("/api/revenue-by-provider");
+            const data = await res.json();
+            new Chart(document.getElementById("providerChart"), {
+                type: "bar",
+                data: {
+                    labels: data.map(d => d.provider_type.length > 20 ? d.provider_type.substring(0, 20) + "..." : d.provider_type),
+                    datasets: [{
+                        label: "Total Medicare Payment ($)",
+                        data: data.map(d => d.total_payment),
+                        backgroundColor: "#1a73e8"
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { ticks: { font: { size: 10 } } } }
+                }
+            });
+        }
+
+        async function loadStateChart() {
+            const res = await fetch("/api/revenue-by-state");
+            const data = await res.json();
+            new Chart(document.getElementById("stateChart"), {
+                type: "bar",
+                data: {
+                    labels: data.map(d => d.state),
+                    datasets: [{
+                        label: "Total Medicare Payment ($)",
+                        data: data.map(d => d.total_payment),
+                        backgroundColor: "#34a853"
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        async function loadMLTable() {
+            const res = await fetch("/api/ml-results");
+            const data = await res.json();
+            const best = data.reduce((a, b) => a.r2 > b.r2 ? a : b).model;
+            const tbody = document.getElementById("mlTable");
+            data.forEach(d => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${d.model} ${d.model === best ? '<span class="badge best">best</span>' : ''}</td>
+                        <td>${d.r2.toFixed(4)}</td>
+                        <td>${d.rmse.toFixed(4)}</td>
+                        <td>${d.mae.toFixed(4)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        loadProviderChart();
+        loadStateChart();
+        loadMLTable();
+    </script>
+</body>
+</html>
